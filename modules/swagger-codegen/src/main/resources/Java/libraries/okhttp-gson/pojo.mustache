@@ -57,14 +57,24 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} implements
         {{/vars}}
     }
 
-    {{classname}}() {
+    public {{classname}}() {
         super();
     }
 
     {{classname}}(Parcel in) {
         {{#parent}} super(in); {{/parent}}
         {{#vars}}
+        {{#isContainer}}
+        {{#complexType}}
+        {{name}} = ({{{datatypeWithEnum}}})in.readValue({{complexType}}.class.getClassLoader());
+        {{/complexType}}
+        {{^complexType}}
         {{name}} = ({{{datatypeWithEnum}}})in.readValue(null);
+        {{/complexType}}
+        {{/isContainer}}
+        {{^isContainer}}
+        {{name}} = ({{{datatypeWithEnum}}})in.readValue(null);
+        {{/isContainer}}
         {{/vars}}
     }
     
