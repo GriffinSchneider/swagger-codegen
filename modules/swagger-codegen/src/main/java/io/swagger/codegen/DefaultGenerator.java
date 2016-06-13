@@ -630,6 +630,12 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         if(ignoreProcessor.allowsFile(new File(outputFilename.replaceAll("//", "/")))) {
             String templateFile = getFullTemplateFile(config, templateName);
             String template = readTemplate(templateFile);
+						
+						System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+						System.out.println("Template name: " + templateName);
+						System.out.println("Template Datar: ");
+						Json.prettyPrint(templateData);
+						
             Template tmpl = Mustache.compiler()
                     .withLoader(new Mustache.TemplateLoader() {
                         @Override
