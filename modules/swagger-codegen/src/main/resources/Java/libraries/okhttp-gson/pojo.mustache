@@ -52,10 +52,13 @@ public class {{classname}} {{#parent}}extends {{{parent}}}{{/parent}} implements
 
 
     public void writeToParcel(Parcel out, int flags) {
-        {{#parent}} super.writeToParcel(out, flags); {{/parent}}
-        {{#vars}}
+        {{#parent}} super.writeToParcel(out, flags); {{/parent}} {{#vars}}
         out.writeValue({{name}});
         {{/vars}}
+    }
+
+    {{classname}}() {
+        super();
     }
 
     {{classname}}(Parcel in) {
