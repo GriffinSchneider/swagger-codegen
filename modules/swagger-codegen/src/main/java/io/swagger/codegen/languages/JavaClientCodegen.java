@@ -26,6 +26,7 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
     public static final String DEFAULT_LIBRARY = "<default>";
     public static final String DATE_LIBRARY = "dateLibrary";
     public static final String USE_RX_JAVA = "useRxJava";
+    public static final String PARCELABLE_MODELS = "parcelableModels";
 
     public static final String RETROFIT_1 = "retrofit";
     public static final String RETROFIT_2 = "retrofit2";
@@ -46,6 +47,7 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
     protected Boolean serializableModel = false;
     protected boolean serializeBigDecimalAsString = false;
     protected boolean useRxJava = false;
+    protected boolean parcelableModels = false;
     protected boolean hideGenerationTimestamp = false;
     protected String apiDocPath = "docs/";
     protected String modelDocPath = "docs/";
@@ -109,12 +111,13 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
                 .SERIALIZE_BIG_DECIMAL_AS_STRING_DESC));
         cliOptions.add(CliOption.newBoolean(FULL_JAVA_UTIL, "whether to use fully qualified name for classes under java.util"));
         cliOptions.add(CliOption.newBoolean(USE_RX_JAVA, "Whether to use the RxJava adapter with the retrofit2 library."));
+        cliOptions.add(CliOption.newBoolean(PARCELABLE_MODELS, "Whether to generate models for Android that implement Parcelable with the okhttp-gson library."));
         cliOptions.add(new CliOption("hideGenerationTimestamp", "hides the timestamp when files were generated"));
 
         supportedLibraries.put(DEFAULT_LIBRARY, "HTTP client: Jersey client 1.19.1. JSON processing: Jackson 2.7.0");
         supportedLibraries.put("feign", "HTTP client: Netflix Feign 8.16.0. JSON processing: Jackson 2.7.0");
         supportedLibraries.put("jersey2", "HTTP client: Jersey client 2.22.2. JSON processing: Jackson 2.7.0");
-        supportedLibraries.put("okhttp-gson", "HTTP client: OkHttp 2.7.5. JSON processing: Gson 2.6.2");
+        supportedLibraries.put("okhttp-gson", "HTTP client: OkHttp 2.7.5. JSON processing: Gson 2.6.2. Enable Parcelable modles on Android using '-DparcelableModels=true'");
         supportedLibraries.put(RETROFIT_1, "HTTP client: OkHttp 2.7.5. JSON processing: Gson 2.3.1 (Retrofit 1.9.0)");
         supportedLibraries.put(RETROFIT_2, "HTTP client: OkHttp 3.2.0. JSON processing: Gson 2.6.1 (Retrofit 2.0.2). Enable the RxJava adapter using '-DuseRxJava=true'. (RxJava 1.1.3)");
 
@@ -210,6 +213,11 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
         if (additionalProperties.containsKey(USE_RX_JAVA)) {
             this.setUseRxJava(Boolean.valueOf(additionalProperties.get(USE_RX_JAVA).toString()));
         }
+				
+        if (additionalProperties.containsKey(PARCELABLE_MODELS)) {
+            this.setParcelableModels(Boolean.valueOf(additionalProperties.get(PARCELABLE_MODELS).toString()));
+        }
+				
         if (fullJavaUtil) {
             javaUtilPrefix = "java.util.";
         }
@@ -1029,6 +1037,10 @@ public class JavaClientCodegen extends DefaultCodegen implements CodegenConfig {
     public void setUseRxJava(boolean useRxJava) {
         this.useRxJava = useRxJava;
     }
+
+	  public void setParcelableModels(boolean parcelableModels) {
+        this.parcelableModels = parcelableModels;
+	  }
 
     public void setDateLibrary(String library) {
         this.dateLibrary = library;
