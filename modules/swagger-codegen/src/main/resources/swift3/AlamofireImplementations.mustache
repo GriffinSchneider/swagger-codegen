@@ -6,8 +6,24 @@
 
 import Alamofire
 
-class AlamofireRequestBuilderFactory: RequestBuilderFactory {
-    func getBuilder<T>() -> RequestBuilder<T>.Type {
+public protocol AlamofireRequestBuilderLoggingDelegate: class {
+    func logRequest(_: DataRequest)
+    func logStringResponse(_: DataResponse<String>, forRequest: DataRequest)
+    func logDataResponse(_: DataResponse<Data>, forRequest: DataRequest)
+    func logGenericResponse(_: DataResponse<Any>, forRequest: DataRequest)
+}
+
+extension AlamofireRequestBuilderLoggingDelegate {
+    func logRequest(_: DataRequest) { }
+    func logStringResponse(_: DataResponse<String>, forRequest: DataRequest) { }
+    func logDataResponse(_: DataResponse<Data>, forRequest: DataRequest) { }
+    func logGenericResponse(_: DataResponse<Any>, forRequest: DataRequest) { }
+}
+
+open class AlamofireRequestBuilderFactory: RequestBuilderFactory {
+    public static weak var loggingDelegate: AlamofireRequestBuilderLoggingDelegate?
+
+    public func getBuilder<T>() -> RequestBuilder<T>.Type {
         return AlamofireRequestBuilder<T>.self
     }
 }
@@ -115,10 +131,12 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
         }
 
         let validatedRequest = request.validate()
+        AlamofireRequestBuilderFactory.loggingDelegate?.logRequest(validatedRequest)
 
         switch T.self {
         case is String.Type:
             validatedRequest.responseString(completionHandler: { (stringResponse) in
+                AlamofireRequestBuilderFactory.loggingDelegate?.logStringResponse(stringResponse, forRequest: validatedRequest)
                 cleanupRequest()
 
                 if stringResponse.result.isFailure {
@@ -139,6 +157,7 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
             })
         case is Void.Type:
             validatedRequest.responseData(completionHandler: { (voidResponse) in
+                AlamofireRequestBuilderFactory.loggingDelegate?.logDataResponse(voidResponse, forRequest: validatedRequest)
                 cleanupRequest()
 
                 if voidResponse.result.isFailure {
@@ -158,6 +177,7 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
             })
         case is Data.Type:
             validatedRequest.responseData(completionHandler: { (dataResponse) in
+                AlamofireRequestBuilderFactory.loggingDelegate?.logDataResponse(dataResponse, forRequest: validatedRequest)
                 cleanupRequest()
 
                 if (dataResponse.result.isFailure) {
@@ -178,6 +198,7 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
             })
         default:
             validatedRequest.responseJSON(options: .allowFragments) { response in
+                AlamofireRequestBuilderFactory.loggingDelegate?.logGenericResponse(response, forRequest: validatedRequest)
                 cleanupRequest()
 
                 if response.result.isFailure {
