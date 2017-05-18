@@ -548,7 +548,14 @@ public class Swift3Codegen extends DefaultCodegen implements CodegenConfig {
         }
 
         char[] separators = {'-', '_', ' ', ':', '(', ')'};
-        return camelize(WordUtils.capitalizeFully(StringUtils.lowerCase(name), separators).replaceAll("[-_ :\\(\\)]", ""), true);
+        name = camelize(WordUtils.capitalizeFully(StringUtils.lowerCase(name), separators).replaceAll("[-_ :\\(\\)]", ""), true);
+
+        // Deal with numerical prefix
+        if (name.matches("\\d.*")) {
+            name = "_" + name;
+        }
+
+        return name;
     }
 
     @Override
