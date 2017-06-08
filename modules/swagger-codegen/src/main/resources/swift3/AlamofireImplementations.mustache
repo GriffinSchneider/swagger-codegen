@@ -13,6 +13,22 @@ public protocol AlamofireRequestBuilderLoggingDelegate: class {
     func logGenericResponse(_: DataResponse<Any>, forRequest: DataRequest)
 }
 
+/// Protocol allows `RequestBuilder` objects to be passed without needing to worry about generics.
+public protocol RequestBuilderProtocol {
+    func addHeaders(_ aHeaders:[String:String]) -> Void
+}
+
+extension RequestBuilder: RequestBuilderProtocol { }
+
+/// Enables error responses to be handled and requests to be retried.
+/// Users of this library may use this to attempt to refresh an access token, as an example.
+public protocol RequestErrorHandler: class {
+    func handleError(request: RequestBuilderProtocol,
+                     errorResponse: ErrorResponse,
+                     shouldRetry: @escaping (Bool) -> Void) -> Bool
+}
+
+/// Enables consumers of this library to log information about requests & responses
 extension AlamofireRequestBuilderLoggingDelegate {
     func logRequest(_: DataRequest) { }
     func logStringResponse(_: DataResponse<String>, forRequest: DataRequest) { }
@@ -23,6 +39,8 @@ extension AlamofireRequestBuilderLoggingDelegate {
 open class AlamofireRequestBuilderFactory: RequestBuilderFactory {
     public static weak var loggingDelegate: AlamofireRequestBuilderLoggingDelegate?
 
+    public static weak var requestErrorHandler: RequestErrorHandler?
+
     public func getBuilder<T>() -> RequestBuilder<T>.Type {
         return AlamofireRequestBuilder<T>.self
     }
@@ -32,6 +50,7 @@ open class AlamofireRequestBuilderFactory: RequestBuilderFactory {
 private var managerStore: [String: Alamofire.SessionManager] = [:]
 
 open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
+
     required public init(method: String, URLString: String, parameters: [String : Any]?, isBody: Bool) {
         super.init(method: method, URLString: URLString, parameters: parameters, isBody: isBody)
     }
@@ -140,10 +159,13 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
                 cleanupRequest()
 
                 if stringResponse.result.isFailure {
-                    completion(
-                        nil,
-                        ErrorResponse(statusCode: stringResponse.response?.statusCode ?? 0, data: stringResponse.data, error: stringResponse.result.error as Error!, response: stringResponse.response)
-                    )
+                    let errorResponse = ErrorResponse(withResponse: stringResponse)
+
+                    guard !self.handleError(response: errorResponse, completion: completion) else {
+                        return
+                    }
+
+                    completion(nil, errorResponse)
                     return
                 }
 
@@ -161,10 +183,13 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
                 cleanupRequest()
 
                 if voidResponse.result.isFailure {
-                    completion(
-                        nil,
-                        ErrorResponse(statusCode: voidResponse.response?.statusCode ?? 0, data: voidResponse.data, error: voidResponse.result.error!, response: voidResponse.response)
-                    )
+                    let errorResponse = ErrorResponse(withResponse: voidResponse)
+
+                    guard !self.handleError(response: errorResponse, completion: completion) else {
+                        return
+                    }
+
+                    completion(nil, errorResponse)
                     return
                 }
 
@@ -181,10 +206,13 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
                 cleanupRequest()
 
                 if (dataResponse.result.isFailure) {
-                    completion(
-                        nil,
-                        ErrorResponse(statusCode: dataResponse.response?.statusCode ?? 0, data: dataResponse.data, error: dataResponse.result.error!, response: dataResponse.response)
-                    )
+                    let errorResponse = ErrorResponse(withResponse: dataResponse)
+
+                    guard !self.handleError(response: errorResponse, completion: completion) else {
+                        return
+                    }
+
+                    completion(nil, errorResponse)
                     return
                 }
 
@@ -202,7 +230,13 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
                 cleanupRequest()
 
                 if response.result.isFailure {
-                    completion(nil, ErrorResponse(statusCode: response.response?.statusCode ?? 0, data: response.data, error: response.result.error!, response: response.response))
+                    let errorResponse = ErrorResponse(withResponse: response)
+
+                    guard !self.handleError(response: errorResponse, completion: completion) else {
+                        return
+                    }
+
+                    completion(nil, errorResponse)
                     return
                 }
 
@@ -239,5 +273,27 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
             httpHeaders[key] = value
         }
         return httpHeaders
+    }
+
+    /// Uses the `requestErrorHandler` if it not `nil`. Returns `true` if the error is being handled. If the error is handled, the caller should not call the completion block.
+    private func handleError(response: ErrorResponse,
+                             completion: @escaping (_ response: Response<T>?, _ error: ErrorResponse?) -> Void) -> Bool {
+
+        if let errorHandler = AlamofireRequestBuilderFactory.requestErrorHandler {
+            let errorWasHandled = errorHandler.handleError(
+                request: self,
+                errorResponse: response,
+                shouldRetry: { attemptRetry in
+                    if attemptRetry {
+                        self.execute(completion)
+                    } else {
+                        completion(nil, response)
+                    }
+            })
+
+            return errorWasHandled
+        }
+
+        return false
     }
 }

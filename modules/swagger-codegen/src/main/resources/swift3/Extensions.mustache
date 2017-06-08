@@ -97,3 +97,17 @@ extension UUID: JSONEncodable {
         return deferred.promise
     }
 }{{/usePromiseKit}}
+
+extension ErrorResponse {
+    init(withResponse response: DataResponse<Any>) {
+        self.init(statusCode: response.response?.statusCode ?? 0, data: response.data, error: response.result.error!, response: response.response)
+    }
+
+    init(withResponse response: DataResponse<Data>) {
+        self.init(statusCode: response.response?.statusCode ?? 0, data: response.data, error: response.result.error!, response: response.response)
+    }
+
+    init(withResponse response: DataResponse<String>) {
+        self.init(statusCode: response.response?.statusCode ?? 0, data: response.data, error: response.result.error!, response: response.response)
+    }
+}
