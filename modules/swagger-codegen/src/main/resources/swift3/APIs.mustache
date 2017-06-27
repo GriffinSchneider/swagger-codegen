@@ -31,7 +31,7 @@ open class APIBase {
 
 open class RequestBuilder<T> {
     var credential: URLCredential?
-    var headers: [String:String] = [:]
+    private(set) open var headers: [String:String] = [:]
     let parameters: [String:Any]?
     let isBody: Bool
     let method: String
