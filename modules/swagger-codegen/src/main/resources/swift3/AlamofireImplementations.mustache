@@ -51,8 +51,8 @@ private var managerStore: [String: Alamofire.SessionManager] = [:]
 
 open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
 
-    required public init(method: String, URLString: String, parameters: [String : Any]?, isBody: Bool) {
-        super.init(method: method, URLString: URLString, parameters: parameters, isBody: isBody)
+    required public init(method: String, URLString: String, parameters: [String : Any]?, isBody: Bool, timeout: TimeInterval?) {
+        super.init(method: method, URLString: URLString, parameters: parameters, isBody: isBody, timeout: timeout)
     }
 
     /**
@@ -61,6 +61,9 @@ open class AlamofireRequestBuilder<T>: RequestBuilder<T> {
      */
     open func createSessionManager() -> Alamofire.SessionManager {
         let configuration = URLSessionConfiguration.default
+        if let timeout = timeout {
+            configuration.timeoutIntervalForRequest = timeout
+        }
         configuration.httpAdditionalHeaders = buildHeaders()
         return Alamofire.SessionManager(configuration: configuration)
     }
