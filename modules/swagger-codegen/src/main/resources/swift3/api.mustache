@@ -124,7 +124,7 @@ open class {{classname}}: APIBase {
         {{#hasQueryParams}}
         url?.queryItems = mapValuesToQueryItems(values:[
         {{#queryParams}}
-                "{{paramName}}": {{paramName}}{{#hasMore}}, {{/hasMore}}
+                "{{baseName}}": {{paramName}}{{#hasMore}}, {{/hasMore}}
         {{/queryParams}}
         ])
         {{/hasQueryParams}}
