@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class InlineModelResolver {
     private Swagger swagger;
     private boolean skipMatches;
@@ -250,7 +252,7 @@ public class InlineModelResolver {
 
                 ObjectProperty op = (ObjectProperty) property;
 
-                String modelName = resolveModelName(op.getTitle(), path + "_" + key);
+                String modelName = resolveModelName(op.getTitle(), path + StringUtils.capitalize(key));
                 Model model = modelFromProperty(op, modelName);
 
                 String existing = matchGenerated(model);
@@ -271,7 +273,7 @@ public class InlineModelResolver {
                     ObjectProperty op = (ObjectProperty) inner;
                     if (op.getProperties() != null && op.getProperties().size() > 0) {
                         flattenProperties(op.getProperties(), path);
-                        String modelName = resolveModelName(op.getTitle(), path + "_" + key);
+                        String modelName = resolveModelName(op.getTitle(), path + StringUtils.capitalize(key));
                         Model innerModel = modelFromProperty(op, modelName);
                         String existing = matchGenerated(innerModel);
                         if (existing != null) {

@@ -289,19 +289,20 @@ public class Swift3Codegen extends DefaultCodegen implements CodegenConfig {
      */
     @Override
     public String toModelName(String name) {
+        System.out.println("toModelName for name: " + name);
+
         name = sanitizeName(name);  // FIXME parameter should not be assigned. Also declare it as "final"
 
         if (!StringUtils.isEmpty(modelNameSuffix)) { // set model suffix
-            name = name + "_" + modelNameSuffix;
+            name = name + initialCaps(modelNameSuffix);
         }
 
         if (!StringUtils.isEmpty(modelNamePrefix)) { // set model prefix
-            name = modelNamePrefix + "_" + name;
+            name = initialCaps(modelNamePrefix) + name;
         }
 
-        // camelize the model name
-        // phone_number => PhoneNumber
-        name = camelize(name);
+        name = sanitizeName(name);
+        name = initialCaps(name);
 
         // model name cannot use reserved keyword, e.g. return
         if (isReservedWord(name)) {
